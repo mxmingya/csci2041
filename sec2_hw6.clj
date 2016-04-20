@@ -63,11 +63,13 @@
 
 (with-open [rdr (reader "/home/maxxx950/csci2041-s16/NASA_access_log_Jul95_short")]
  (doseq [line (line-seq rdr)]
-  (count-IP line)))
-
-(with-open [rdr (reader "/home/maxxx950/csci2041-s16/NASA_access_log_Jul95_short")]
- (doseq [line (line-seq rdr)]
-  (find-private-IP line)))
+  (count-IP line)
+  (find-private-IP line)
+  (count-request-on-dates line)
+  (count-hosts line)
+  (find-server-error line)
+  (count-redirect line)
+  (count-morethan50000 line)))
 
  (println countOfIP)
 (println PIP)
