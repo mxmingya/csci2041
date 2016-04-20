@@ -44,7 +44,7 @@
 (def big_requiest (atom 0))
 (defn count-morethan50000 [line]
  "count the number of request that between 10:00pm and 13:30pm on 5th of July"
- (if (not (nil? (re-find #"HTTP[/]1[.]0[/]\s5\d{1,2}\s\d{1,6}$" line)))
+ (if (not (nil? (re-find #"HTTP[/]1[.]0[/]\s5\d{1,2}\s\d[5-9]\d{1,5}$" line)))
   (do
    ;(println line)
    (swap! conj server_errors line))))
