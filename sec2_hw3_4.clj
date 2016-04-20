@@ -1,4 +1,4 @@
- (ns sec2-hw3-4)
+(ns sec2-hw3-4)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; modular inverse
@@ -23,7 +23,7 @@
   (if (== n 0)
     (/ a)
     (let [result (egcd n a)]
-      (if (== (second result) 1) ;; check if inverse exists...
+      (if (== (second result) 1)                            ;; check if inverse exists...
         (mod (last result) n)
         nil))))
 
@@ -34,12 +34,12 @@
   "compute base^exp mod m, fast. exp must be a non-neg integer.
   if m=0, then just compute base^exp (no mod)."
   [base exp m]
-  (cond (== exp 0)   1
-        (neg? exp)  'error
+  (cond (== exp 0) 1
+        (neg? exp) 'error
         (even? exp) (modz ((fn [x] (* x x)) (expmod base (quot exp 2) m))
                           m)
-        :else       (modz (* base (expmod base (- exp 1) m))
-                          m)))
+        :else (modz (* base (expmod base (- exp 1) m))
+                    m)))
 
 (defn rand-bigint "crude random number of type bigint" [n]
   (bigint (bigdec (rand n))))
@@ -51,96 +51,112 @@
 
 (defn fast-prime? "randomized prime tester, default 40 times" [n & opt-times]
   (loop [times (or (first opt-times) 40)]
-    (cond (== times 0)          true
+    (cond (== times 0) true
           (fermat-test-once n) (recur (- times 1))
-          :else                false)))
+          :else false)))
 
 (defn strong-prime? "check if n & (n-1)/2 are both prime" [n]
   (and (fast-prime? n) (fast-prime? (quot (- n 1) 2))))
 
 (defn find-first "Starting at N, applying update each time, find first number satisfying pred"
-  ([pred N ] (find-first pred N inc))
+  ([pred N] (find-first pred N inc))
   ([pred N update] (if (pred N) N (recur pred (update N) update))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def p 6240322667N)    ; need long integer
-(def q 6240323147N)    ; need long integer
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; homework question
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def p 6240322667N)                                         ; need long integer
+(def q 6240323147N)                                         ; need long integer
 (def n (* q p))
 (def m (* (- p 1) (- q 1)))
 ;;;part 1
-(defn find-3 [m]
+(defn find-e [m]
   (let [e (+ 2 (rand-bigint (- m 2)))]
     ;;wait to be modified
-    (if (and (== (second (egcd e m)) 1) (not= (modular-inverse n m) nil))
-      (if (not= e 0)
-        e
-        (find-3 m))
-      (find-3 m))))
+    (if (not= (modular-inverse e m) nil)
+      e
+      (recur m))))
 
-(def e (find-3 m))
+(def e (find-e m))
+;(println e)
 
 (def d (modular-inverse e m))
-
+;(println d)
 ;;;;;part 2 key distribution
 
- (defn make-public-key [n e] {:mod n :exp e})
+(defn make-public-key [n e] {:mod n :exp e})
 
- (defn public-mod [pk] (get pk :mod))
+(defn public-mod [pk] (get pk :mod))
 
- (defn public-exp [pk] (get pk :exp))
+(defn public-exp [pk] (get pk :exp))
 
- (defn publickey (make-public-key n e))
+(def publickey (make-public-key n e))
 
- (defn make-private-key [ n e] {:mod n :exp d})
+(defn make-private-key [n d] {:mod n :exp d})
 
- (defn private-mod [pk] (get make-public-key :mod))
+(defn private-mod [pk] (get pk :mod))
 
- (defn private-exp [pk] (get make-public-key :exp))
+(defn private-exp [pk] (get pk :exp))
 
- (defn privatekey (make-private-key n d))
+(def privatekey (make-private-key n d))
 
 
 ;;part 3 Encrption of a word
 
 ;helper
 (defn string->ascii [str]
-  (map (fn [str] (Character/getNumericValue str)) str))
+  (map (fn [str] (- (int str) 32)) str))
 ;helper
 (defn ascii-num91 [lis]
-  (loop [c 0 result 0]
-    (if (== c (count lis))
-      result
-      (recur (inc c)
-             (+ result (* (nth lis c) (Math/pow 91 (- (count lis) (inc c)))))
-             ))))
+  (reduce (fn [x y] (+ y (* 91 x))) lis))
 
+(defn encrypt-num [number publickey]
+  (let [pn (expmod number (public-exp publickey) (public-mod publickey))]
+    (if (> pn (public-mod publickey))
+      nil
+      pn)))
+(println "test of encrypting numbers: \n" (encrypt-num 2 publickey) "\n" "----------------")
 
- (defn encrypt-num [number publickey]
-   (let  [pn (expmod number (public-exp publickey) (public-mod publickey))]
-     (if (> pn (public-mod publickey))
-       nil
-       pn)))
+(defn encrypt-word [plaintext publickey]
+  (let [pn (ascii-num91 (map bigint (string->ascii plaintext)))]
+    (encrypt-num pn publickey)))
+;;test part 3
+(println "test of encrypting words: \n")
 
- (defn encrypt-word [plaintext publickey]
-   (let [pn (ascii-num91 (string->ascii plaintext))]
-     (encrypt-num pn publickey)))
+(println "void: " (encrypt-word "void" publickey))
+(println "gini: " (encrypt-word "gini" publickey))
+(println "---------------------------------")
 
 ;part 4 Decryption of a word
-(defn decrypt-word [cyphertext private-key]
-  (let [ct (expmod cyphertext (private-exp privatekey) (private-mod privatekey))]
-    ct))
+;descrypted the number
+(defn descrpt91 [num]
+  (if (< num 1)
+    []
+    (conj (vec (descrpt91 (/ num 91))) (+ 32 (mod num 91)))))
+
+;change ascii code list to string
+(defn ascii-char [decryptednum]                             ;number is a sequence of ascii numbers
+  (apply str (map char decryptednum)))
+
+(defn decrypt-word [cyphernumber privatekey]
+  (let [decrytedstring (expmod cyphernumber (private-exp privatekey) (private-mod privatekey))]
+    (let [result (ascii-char (descrpt91 decrytedstring))]
+      result)))
+(println "test of decryting words: \n" (decrypt-word (encrypt-word "void" publickey) privatekey))
+(println (decrypt-word (encrypt-word "gini" publickey) privatekey))
+(println "--------------------------------------------")
+
 
 ;part 5 Encryption of a sentence
- (defn encrypt-msg [msg publickey]
-   (let [msg (seq msg)]
-     (loop [c 0 result 0]
-       (if (== c count msg)
-         result
-         (recur (inc c) (+ result (encrypt-word (nth msg c) publickey)))))))
+(defn encrypt-msg [msg publickey]
+  (map (fn [x] (encrypt-word x publickey)) (partition-by (fn [x] (= x \space)) msg)))
+
+(println "test of encrypt-msg\n")
+(println (encrypt-msg "University of Minnesota" publickey))
+(println "------------------------")
 
 ;part 6 Decryption of a sentence
- (defn decrypt-msg [msg privatekey]
-   (loop [c 0 current (nth msg c) result (list nil)]
-     (if (== (count msg) c)
-       (apply str result)
-       (recur (inc c) current (concat result (decrypt-word current privatekey))))))
+(defn decrypt-msg [msg privatekey]
+  (map (fn [x] (decrypt-word x privatekey)) msg))
+
+(println (decrypt-msg (encrypt-msg "university of Minnesota" publickey) privatekey))
