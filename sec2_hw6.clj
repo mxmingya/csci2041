@@ -9,6 +9,46 @@
     ;(println line)
        (swap! countOfIP inc))))
 
+(def requestOnDate (atom 0)) ;;a global variable to record the requests received from 4th to 5th July
+(defn count-request-on-dates [line]
+ "count the number of request that received on 4th to 5th July"
+ (if (not (nil? (re-find #"\d[4-5][/]Jul[/]1995[:]\d{2}[:]\d{2}[:]\d{2}/s[-]0400" line)))
+  (do
+   ;(println line)
+   (swap! requestOnDate inc))))
+
+(def requestOnDate_ (atom 0)) ;;a global variable to record the requests received between 10am and 10:30 am on 5th of July
+(defn count-hosts [line]
+ "count the number of request that between 10:00pm and 13:30pm on 5th of July"
+ (if (not (nil? (re-find #"05[/]Jul[/]1995[:]22[:]\d[00-30][:]\d{2}\s[-]0400" line)))
+  (do
+   ;(println line)
+   (swap! requestOnDate_ inc))))
+
+(def server_errors (atom ()))
+(defn find-server-error [line]
+ "count the number of request that between 10:00pm and 13:30pm on 5th of July"
+ (if (not (nil? (re-find #"HTTP[/]1[.]0[/]\s5\d{1,2}\s\d{1,6}$" line)))
+  (do
+   ;(println line)
+   (swap! conj server_errors line))))
+
+(def request_redirect (atom 0))
+(defn count-redirect [line]
+ "count the number of request that were redirected"
+ (if (not (nil? (re-find #"HTTP[/]1[.]0[/]\s3\d{1,2}\s\d{1,6}$" line)))
+  (do
+   ;(println line)
+   (swap! request_redirect inc))))
+
+(def big_requiest (atom 0))
+(defn count-morethan50000 [line]
+ "count the number of request that between 10:00pm and 13:30pm on 5th of July"
+ (if (not (nil? (re-find #"HTTP[/]1[.]0[/]\s5\d{1,2}\s\d{1,6}$" line)))
+  (do
+   ;(println line)
+   (swap! conj server_errors line))))
+
  (def PIP (atom '()))
  (defn find-private-IP [line]
   "Find in the file all the requests that were made from a private IP address,
