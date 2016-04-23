@@ -2,131 +2,179 @@
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]))
 
-;;;
 ;;; Circles Game Basic Setup
 ;;; CSCI 2041 Homework #7
 ;;; Spring 2016
-;;;
-
-;;;
+(defn left-wall [c]
+    "if move to left-wall bounce back"
+    (let [h (mod (:heading c) q/TWO-PI)]
+      ;(and (or (>= h q/HALF-PI) (<= h (+ q/HALF-PI q/PI)))
+          (<= (- (:x c) (/ (:size c) 2)) 0)))
+ (defn right-wall [c]
+    "if move to right-wall bounce back"
+    (let [h (mod (:heading c) q/TWO-PI)]
+      ;(and (or (>= h (+ q/PI q/HALF-PI)) (<= h q/HALF-PI))
+          (>= (+ (:x c)(/ (:size c) 2)) 500)))
+ (defn up-wall [c]
+    "if move to up-wall bounce back"
+    (let [h (mod (:heading c) q/TWO-PI)]
+      ;(and (and (>= h (+ q/PI q/HALF-PI)) (<= h q/TWO-PI))
+          (<= (- (:y c) (/ (:size c) 2)) 0)))
+ (defn down-wall [c]
+    "if move to left-wall bounce back"
+    (let [h (mod (:heading c) q/TWO-PI)]
+     ; (and (<= h q/PI)
+          (>= (+ (:y c) (/ (:size c) 2)) 500)))
 ;;; Constants
-;;;
+(def speed 6)                          ;maximm speed circles move
 
-(def speed 13)                                   ;the maximm speed we want the circles to move at
+;---------------------------------------------------------------------
+; Setup
+;---------------------------------------------------------------------
 
-;;;
-;;; Setup
-;;;
-
-(defn make-circle [x y]
+(defn make-circle 
   "Creates a circle with a random color and set speed and heading."
-  (let [angle (rand q/TWO-PI)                  ;get a random angle
-        cur-speed (rand speed)]                ;get a random speed up to our constant
-       {:x x                                   ;set this circle's x
-    	:y y                                   ;set this circle's y
-        :size (+ 10 (rand 15))                 ;set a random diameter between 10 and 25
-    	:color (rand 255)                      ;make this colorful      
-    	:speed cur-speed                       ;set this circle's speed
-    	:heading angle}                        ;set this circle's heading
-    ))                                         ;returns and instance of a circle
+   [x y]
+  (let [angle (rand q/TWO-PI)          ;random angle
+        cur-speed (+ (rand speed) 1)]  ;random speed up to our constant
+       {:x x                           ;set this circle's x
+    	:y y                           ;set this circle's y
+        :size (+ 10 (rand 15))         ;set random diameter 
+    	:color (rand 255)              ;make this colorful      
+    	:speed cur-speed               ;set this circle's speed
+    	:heading angle}                ;set this circle's heading
+    ))                                 ;returns circle
 
-(defn setup []
+(defn make-sqaure
+  "Creates a sqaure with a random color and set speed and heading."
+  [x y]
+  (let [angle (rand q/TWO-PI)
+        cur-speed 0]
+    {
+      :x x
+      :y y
+      :size (+ 10 (rand 15))
+      :color (rand 255)
+      :speed cur-speed
+      :heading angle}
+    ))
+(defn setup 
   "Set up a sketch and return initial state."
-  (q/frame-rate 30)                            ;frequency update and draw functions
-  (q/color-mode :hsb)                          ;how we represent colors
-  (q/background 250)                           ;nice light grey color for the bg
+  []
+  (q/frame-rate 30)                    ;frequency update and draw functions
+  (q/color-mode :hsb)                  ;how we represent colors
   (let [size (q/width)
-        n 20]
-   {:circle (make-circle (rand size) (rand size))  ;store a random circle ###
-    :running? true                             ;so we can pause and unpause in update
-    :n n                                       ;how many circles
-    :size size                                 ;how big is the sketch
-    :bg 250}))                                 ;we might want to change this later
-
-;
+        n 20
+        bg 250]
+       (q/background bg)               ;nice light grey color for the bg
+       ;; need to make n circles of random sizes
+       ;; here we make only one circle in a list
+       {:circles (list  (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size))
+                        (make-circle (rand size) (rand size)))
+                         
+        :running? true                 ;so we can pause and unpause in update
+        :n n                           ;how many circles
+        :size size                     ;how big is the sketch
+        :bg bg                         ;we might want to change this later
+        }))
+    
+;---------------------------------------------------------------------
 ; Update functions
+;---------------------------------------------------------------------
 (defn bounce-back [c size]
   (let [ x (:x c)
          y (:y c)
-         r (/ (:size c) 2)]
-  (cond 
-    (<= (- x r) 0) 
-      (cond (<= (- x r) 0) (update-in c [:heading] (fn [n] (- n)))
-            (>= (+ x r) 500) (update-in c [:heading] (fn [n] (- n)))
-            :else c)
-    (>= (:x c) 500)
-    	(cond (<= (- x r) 0) (update-in c [:heading] (fn [n] (- n)))
-            (>= (+ x r) 500) (update-in c [:heading] (fn [n] (- n)))
-            :else c)
-    :else
-    	(cond (<= (- x r) 0) (update-in c [:heading] (fn [n] (- n)))
-            (>= (+ x r) 500) (update-in c [:heading] (fn [n] (- n)))
-            :else c)
-    )
-   )
-)
-    ;end of big condition
-  
+         r (/ (:size c) 2)
+         nc (if (left-wall c)
+              (update-in c [:heading] (fn [n] (- n q/HALF-PI)))
+              c)]
+    (cond (right-wall nc) (update-in nc [:heading] (fn [n] (- n q/HALF-PI)))
+          (up-wall nc) (update-in nc [:heading] (fn [n] (- n)))
+          (down-wall nc) (update-in nc [:heading] (fn [n] (- n)))
+          :else nc
+      )))
 (defn move-circle [c state]
-  (bounce-back c (:size c))
-  (let [angle (:heading c)
+  (q/text "ScoreBoard: " 0 10)
+  (let [angle (:heading (bounce-back c (:size c)))
         dx (* (:speed c) (q/cos angle))
         dy (* (:speed c) (q/sin angle))]
   	(update-in (update-in (bounce-back c (:size c)) [:x] (fn [n] (+ n dx))) 
                [:y] (fn [n] (+ n dy)))
     ))
-;
 
+(defn update-score [])
 
-(comment
-(defn update-circles [circles state]
+(defn update-circles 
   "Moves each circle and returns updated vector of circles."
-  (reduce
-   (fn [new-circles ind]                       ;create a new vector to work with
-     (update-in new-circles [ind] move-circle state)) ;make the update
-   circles
-   (range (count circles))))
-)
+  
+  [circles state]
+  (map (fn [c] (move-circle c state)) circles))
 
-(defn update-state [state]
+(defn update-state 
   "Updates sketch state. If it is paused, then the state is returned unmodified."
+  [state]
   (if (:running? state)
-    ;currently just returns the state, you need some movement and update functions, then uncomment the next line
-    ;(update-in state [:circles] update-circles state)
-    (update-in state [:circle] move-circle state)
-    state))
+      ;add some movement and update functions so the next line moves circles
+      (assoc state :circles (update-circles (:circles state) state))
+      state))
 
-;
+;---------------------------------------------------------------------
 ; Draw functions
-;
+;---------------------------------------------------------------------
 
-(defn draw-circle [c] 
+(defn draw-circle 
   "Draws an individual circle with correct color, location, and size."
-    (q/fill (:color c) 255 255)
-    (q/ellipse (:x c) (:y c) (:size c) (:size c)))
+  [c] 
+  (q/fill (:color c) 255 255)
+  (q/ellipse (:x c) (:y c) (:size c) (:size c))
+  ;(repeat 19 (q/ellipse (rand (:x c)) (rand (:y c)) (:size c) (:size c)))
+  )
+(defn draw-square
+  "Draw a sqaure with corrent color, location, and size"
+  [s]
+  (q/fill (:color s) 255 255)
+  (q/rect (:x s) (:y s) (:size s)(:size s)))
 
-(defn draw-state [state]
-  "Draws sketch state."
+(defn draw-state 
+  "Draws the sketch state."
+  [state]
   (q/background (:bg state))                    ;update the background
   (q/stroke 1)                                  ;how wide should the lines be
-  ;this draws an unchanging circle that we've stored in the sketch state
-  (draw-circle (:circle state))          ;###
-  ;this draws a circle that is newly generated each time draw is called
-  ;uncomment the following line to see what happens
-  ;(draw-circle (make-circle (rand (:size state)) (rand (:size state))))
+  (dorun (map draw-circle (:circles state)))    ;map is lazy
+  (q/fill 0)
   )
 
-;;;
-;;; User interaction functions
-;;;
+;---------------------------------------------------------------------
+; User interaction functions
+;---------------------------------------------------------------------
 
-(defn mouse-clicked [state event]
+(defn mouse-clicked 
   "Changes background color to different shades of grey."
+  [state event]
   (update-in state [:bg] (fn [n] (rand-int 255))))
 
-(defn key-pressed [state event]
-  "Process key event.
-   p will pause/unpause everything."
+(defn key-pressed 
+  "Process key event.  p will pause/unpause everything."
+  [state event]
   (condp = (:key event)
     :p (update-in state [:running?] not)
     state))
