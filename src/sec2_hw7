@@ -1,0 +1,142 @@
+(ns circles.core
+  (:require [quil.core :as q :include-macros true]
+            [quil.middleware :as m]))
+
+;;;
+;;; Circles Game Basic Setup
+;;; CSCI 2041 Homework #7
+;;; Spring 2016
+;;;
+
+;;;
+;;; Constants
+;;;
+
+(def speed 13)                                   ;the maximm speed we want the circles to move at
+
+;;;
+;;; Setup
+;;;
+
+(defn make-circle [x y]
+  "Creates a circle with a random color and set speed and heading."
+  (let [angle (rand q/TWO-PI)                  ;get a random angle
+        cur-speed (rand speed)]                ;get a random speed up to our constant
+       {:x x                                   ;set this circle's x
+    	:y y                                   ;set this circle's y
+        :size (+ 10 (rand 15))                 ;set a random diameter between 10 and 25
+    	:color (rand 255)                      ;make this colorful      
+    	:speed cur-speed                       ;set this circle's speed
+    	:heading angle}                        ;set this circle's heading
+    ))                                         ;returns and instance of a circle
+
+(defn setup []
+  "Set up a sketch and return initial state."
+  (q/frame-rate 30)                            ;frequency update and draw functions
+  (q/color-mode :hsb)                          ;how we represent colors
+  (q/background 250)                           ;nice light grey color for the bg
+  (let [size (q/width)
+        n 20]
+   {:circle (make-circle (rand size) (rand size))  ;store a random circle ###
+    :running? true                             ;so we can pause and unpause in update
+    :n n                                       ;how many circles
+    :size size                                 ;how big is the sketch
+    :bg 250}))                                 ;we might want to change this later
+
+;
+; Update functions
+(defn bounce-back [c size]
+  (let [ x (:x c)
+         y (:y c)
+         r (/ (:size c) 2)]
+  (cond 
+    (<= (- x r) 0) 
+      (cond (<= (- x r) 0) (update-in c [:heading] (fn [n] (- n)))
+            (>= (+ x r) 500) (update-in c [:heading] (fn [n] (- n)))
+            :else c)
+    (>= (:x c) 500)
+    	(cond (<= (- x r) 0) (update-in c [:heading] (fn [n] (- n)))
+            (>= (+ x r) 500) (update-in c [:heading] (fn [n] (- n)))
+            :else c)
+    :else
+    	(cond (<= (- x r) 0) (update-in c [:heading] (fn [n] (- n)))
+            (>= (+ x r) 500) (update-in c [:heading] (fn [n] (- n)))
+            :else c)
+    )
+   )
+)
+    ;end of big condition
+  
+(defn move-circle [c state]
+  (bounce-back c (:size c))
+  (let [angle (:heading c)
+        dx (* (:speed c) (q/cos angle))
+        dy (* (:speed c) (q/sin angle))]
+  	(update-in (update-in (bounce-back c (:size c)) [:x] (fn [n] (+ n dx))) 
+               [:y] (fn [n] (+ n dy)))
+    ))
+;
+
+
+(comment
+(defn update-circles [circles state]
+  "Moves each circle and returns updated vector of circles."
+  (reduce
+   (fn [new-circles ind]                       ;create a new vector to work with
+     (update-in new-circles [ind] move-circle state)) ;make the update
+   circles
+   (range (count circles))))
+)
+
+(defn update-state [state]
+  "Updates sketch state. If it is paused, then the state is returned unmodified."
+  (if (:running? state)
+    ;currently just returns the state, you need some movement and update functions, then uncomment the next line
+    ;(update-in state [:circles] update-circles state)
+    (update-in state [:circle] move-circle state)
+    state))
+
+;
+; Draw functions
+;
+
+(defn draw-circle [c] 
+  "Draws an individual circle with correct color, location, and size."
+    (q/fill (:color c) 255 255)
+    (q/ellipse (:x c) (:y c) (:size c) (:size c)))
+
+(defn draw-state [state]
+  "Draws sketch state."
+  (q/background (:bg state))                    ;update the background
+  (q/stroke 1)                                  ;how wide should the lines be
+  ;this draws an unchanging circle that we've stored in the sketch state
+  (draw-circle (:circle state))          ;###
+  ;this draws a circle that is newly generated each time draw is called
+  ;uncomment the following line to see what happens
+  ;(draw-circle (make-circle (rand (:size state)) (rand (:size state))))
+  )
+
+;;;
+;;; User interaction functions
+;;;
+
+(defn mouse-clicked [state event]
+  "Changes background color to different shades of grey."
+  (update-in state [:bg] (fn [n] (rand-int 255))))
+
+(defn key-pressed [state event]
+  "Process key event.
+   p will pause/unpause everything."
+  (condp = (:key event)
+    :p (update-in state [:running?] not)
+    state))
+
+(q/defsketch circles
+    :host "host"
+    :size [500 500]                ;we need a square canvas
+    :setup setup                   ;getting things started, setting initial state
+    :update update-state           ;the function to update the state
+    :draw draw-state               ;the necessary draw function
+    :mouse-clicked mouse-clicked   ;this is our mouse click event
+    :key-pressed key-pressed       ;this is our keyboard input event
+    :middleware [m/fun-mode])      ;this gives us the ability to have state
