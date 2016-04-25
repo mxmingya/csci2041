@@ -179,7 +179,7 @@
   [state event]
   (condp = (:key event)
     :p (update-in state [:running?] not)
-    :up (update-in state [:y] dec)
+    :up (update-in state (update-in [:rectangle] [:y] dec) dec)
     :down (update-in state [:y] inc)
     :left (update-in state [:x] dec)
     :right (update-in state [:x] inc)
