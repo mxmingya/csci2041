@@ -44,6 +44,18 @@
     	:speed cur-speed               ;set this circle's speed
     	:heading angle}                ;set this circle's heading
     ))                                 ;returns circle
+(defn make-mcircle 
+  "Creates a circle with a random color and set speed and heading."
+   [x y]
+  (let [angle (rand q/TWO-PI)          ;random angle
+        cur-speed 0]  ;random speed up to our constant
+       {:x x                           ;set this circle's x
+    	:y x                           ;set this circle's y
+        :size 	25         ;set random diameter 
+    	:color  100             ;make this colorful      
+    	:speed 	0               ;set this circle's speed
+    	:heading angle}                ;set this circle's heading
+    )) 
 
 (defn make-sqaure
   "Creates a sqaure with a random color and set speed and heading."
@@ -69,27 +81,20 @@
        (q/background bg)               ;nice light grey color for the bg
        ;; need to make n circles of random sizes
        ;; here we make only one circle in a list
-       {:circles (list  (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size))
-                        (make-circle (rand size) (rand size)))
+       {:circles (list  (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-circle 100 100)(make-circle 100 100)
+                        (make-mcircle 250 250) ;circle that control by the player
+                      	)
                          
         :running? true                 ;so we can pause and unpause in update
         :n n                           ;how many circles
