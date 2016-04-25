@@ -88,7 +88,7 @@
         :n n                           ;how many circles
         :size size                     ;how big is the sketch
         :bg bg                         ;we might want to change this later
-        :mcircle  (make-mcircle 250 250)  ;the player ball
+        :rectangle  (make-rectangle 250 250)  ;the player ball
         }))
     
 ;---------------------------------------------------------------------
@@ -151,15 +151,16 @@
 (defn draw-rectangle 
   "Draws an individual circle with correct color, location, and size."
   [c] 
-  (q/rec 250 250 100 100)
+  (q/rect 250 250 20 20)
   ;(repeat 19 (q/ellipse (rand (:x c)) (rand (:y c)) (:size c) (:size c)))
   )
 (defn draw-state 
   "Draws the sketch state."
   [state]
   (q/background (:bg state))                    ;update the background
-  (q/stroke 1)                                  ;how wide should the lines be
+  (q/stroke 1)   ;how wide should the lines be
  ; (dorun (map draw-circle (:mcircle state)))
+  (draw-rectangle :rectangle)
   (dorun (map draw-circle (:circles state)))    ;map is lazy
   (q/fill 0)
   )
